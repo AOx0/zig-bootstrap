@@ -15,7 +15,7 @@ pub const macos = @import("darwin/macos.zig");
 pub fn isSdkInstalled(allocator: Allocator) bool {
     const result = std.process.Child.run(.{
         .allocator = allocator,
-        .argv = &.{ "/usr/bin/xcode-select", "--print-path" },
+        .argv = &.{ "xcode-select", "--print-path" },
     }) catch return false;
 
     defer {
@@ -47,7 +47,7 @@ pub fn getSdk(allocator: Allocator, target: Target) ?[]const u8 {
         .tvos => if (is_simulator_abi) "appletvsimulator" else "appletvos",
         else => return null,
     };
-    const argv = &[_][]const u8{ "/usr/bin/xcrun", "--sdk", sdk, "--show-sdk-path" };
+    const argv = &[_][]const u8{ "xcrun", "--sdk", sdk, "--show-sdk-path" };
     const result = std.process.Child.run(.{ .allocator = allocator, .argv = argv }) catch return null;
     defer {
         allocator.free(result.stderr);
