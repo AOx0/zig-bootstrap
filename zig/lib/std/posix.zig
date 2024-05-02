@@ -6268,7 +6268,7 @@ pub fn sendfile(
                 }
             }
         },
-        .macos, .ios, .tvos, .watchos => sf: {
+        .macos, .ios, .tvos, .watchos => { // sf: {
             var hdtr_data: std.c.sf_hdtr = undefined;
             var hdtr: ?*std.c.sf_hdtr = null;
             if (headers.len != 0 or trailers.len != 0) {
@@ -6288,41 +6288,42 @@ pub fn sendfile(
                 hdtr = &hdtr_data;
             }
 
-            while (true) {
-                var sbytes: off_t = @min(in_len, max_count);
-                const err = errno(system.sendfile(in_fd, out_fd, @bitCast(in_offset), &sbytes, hdtr, flags));
-                const amt: usize = @bitCast(sbytes);
-                switch (err) {
-                    .SUCCESS => return amt,
+            // // TODO: AOx0 Replace this error check with something that does not crash
+            // while (true) {
+            //     var sbytes: off_t = @min(in_len, max_count);
+            //     const err = errno(system.sendfile(in_fd, out_fd, @bitCast(in_offset), &sbytes, hdtr, flags));
+            //     const amt: usize = @bitCast(sbytes);
+            //     switch (err) {
+            //         .SUCCESS => return amt,
 
-                    .BADF => unreachable, // Always a race condition.
-                    .FAULT => unreachable, // Segmentation fault.
-                    .INVAL => unreachable,
-                    .NOTCONN => return error.BrokenPipe, // `out_fd` is an unconnected socket
+            //         .BADF => unreachable, // Always a race condition.
+            //         .FAULT => unreachable, // Segmentation fault.
+            //         .INVAL => unreachable,
+            //         .NOTCONN => return error.BrokenPipe, // `out_fd` is an unconnected socket
 
-                    .OPNOTSUPP, .NOTSOCK, .NOSYS => break :sf,
+            //         .OPNOTSUPP, .NOTSOCK, .NOSYS => break :sf,
 
-                    .INTR => if (amt != 0) return amt else continue,
+            //         .INTR => if (amt != 0) return amt else continue,
 
-                    .AGAIN => if (amt != 0) {
-                        return amt;
-                    } else {
-                        return error.WouldBlock;
-                    },
+            //         .AGAIN => if (amt != 0) {
+            //             return amt;
+            //         } else {
+            //             return error.WouldBlock;
+            //         },
 
-                    .IO => return error.InputOutput,
-                    .PIPE => return error.BrokenPipe,
+            //         .IO => return error.InputOutput,
+            //         .PIPE => return error.BrokenPipe,
 
-                    else => {
-                        unexpectedErrno(err) catch {};
-                        if (amt != 0) {
-                            return amt;
-                        } else {
-                            break :sf;
-                        }
-                    },
-                }
-            }
+            //         else => {
+            //             unexpectedErrno(err) catch {};
+            //             if (amt != 0) {
+            //                 return amt;
+            //             } else {
+            //                 break :sf;
+            //             }
+            //         },
+            //     }
+            // }
         },
         else => {}, // fall back to read/write
     }
