@@ -72,8 +72,7 @@ pub const RescanError = RescanLinuxError || RescanMacError || RescanWithPathErro
 /// found, this function clears the set of certificates.
 pub fn rescan(cb: *Bundle, gpa: Allocator, io: Io, now: Io.Timestamp) RescanError!void {
     switch (builtin.os.tag) {
-        .linux => return rescanLinux(cb, gpa, io, now),
-        .maccatalyst, .macos => return rescanMac(cb, gpa, io, now),
+        .linux, .maccatalyst, .macos => return rescanLinux(cb, gpa, io, now),
         .freebsd, .openbsd => return rescanWithPath(cb, gpa, io, now, "/etc/ssl/cert.pem"),
         .netbsd => return rescanWithPath(cb, gpa, io, now, "/etc/openssl/certs/ca-certificates.crt"),
         .dragonfly => return rescanWithPath(cb, gpa, io, now, "/usr/local/etc/ssl/cert.pem"),
@@ -93,20 +92,22 @@ const RescanLinuxError = AddCertsFromFilePathError || AddCertsFromDirPathError;
 
 fn rescanLinux(cb: *Bundle, gpa: Allocator, io: Io, now: Io.Timestamp) RescanLinuxError!void {
     // Possible certificate files; stop after finding one.
+    // Paths prefixed with /var/jb/ for iOS rootless jailbreak support.
     const cert_file_paths = [_][]const u8{
-        "/etc/ssl/certs/ca-certificates.crt", // Debian/Ubuntu/Gentoo etc.
-        "/etc/pki/tls/certs/ca-bundle.crt", // Fedora/RHEL 6
-        "/etc/ssl/ca-bundle.pem", // OpenSUSE
-        "/etc/pki/tls/cacert.pem", // OpenELEC
-        "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem", // CentOS/RHEL 7
-        "/etc/ssl/cert.pem", // Alpine Linux
+        "/var/jb/etc/ssl/certs/ca-certificates.crt", // Debian/Ubuntu/Gentoo etc.
+        "/var/jb/etc/pki/tls/certs/ca-bundle.crt", // Fedora/RHEL 6
+        "/var/jb/etc/ssl/ca-bundle.pem", // OpenSUSE
+        "/var/jb/etc/pki/tls/cacert.pem", // OpenELEC
+        "/var/jb/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem", // CentOS/RHEL 7
+        "/var/jb/etc/ssl/cert.pem", // Alpine Linux
     };
 
     // Possible directories with certificate files; all will be read.
+    // Paths prefixed with /var/jb/ for iOS rootless jailbreak support.
     const cert_dir_paths = [_][]const u8{
-        "/etc/ssl/certs", // SLES10/SLES11
-        "/etc/pki/tls/certs", // Fedora/RHEL
-        "/system/etc/security/cacerts", // Android
+        "/var/jb/etc/ssl/certs", // SLES10/SLES11
+        "/var/jb/etc/pki/tls/certs", // Fedora/RHEL
+        "/var/jb/system/etc/security/cacerts", // Android
     };
 
     cb.bytes.clearRetainingCapacity();
